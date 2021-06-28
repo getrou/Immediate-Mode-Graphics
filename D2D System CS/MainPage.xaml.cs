@@ -69,14 +69,62 @@ namespace D2D_System_CS
             PInvoke.D2D1CreateDevice(dxgiDevice, creationProperties, out d2dDevice);
 
             ID2D1DeviceContext d2dDeviceContext;
-            d2dDevice.CreateDeviceContext(D2D1_DEVICE_CONTEXT_OPTIONS.D2D1_DEVICE_CONTEXT_OPTIONS_NONE, out d2dDeviceContext);
+            d2dDevice.CreateDeviceContext(D2D1_DEVICE_CONTEXT_OPTIONS.D2D1_DEVICE_CONTEXT_OPTIONS_NONE, d2dDeviceContext);
 
             IDXGIAdapter dxgiAdapter;
             dxgiDevice.GetAdapter(out dxgiAdapter);
 
-            IDXGIFactory2 dxgiFactory;
-            //System.GUID* riid;
-            //dxgiAdapter.GetParent(typeof(IDXGIFactory2).GUID, out dxgiFactory);
+            object dxgiFactoryObject;
+            Guid guid = typeof(IDXGIFactory2).GUID;
+            dxgiAdapter.GetParent(guid, out dxgiFactoryObject);
+            IDXGIFactory2 dxgiFactory = (IDXGIFactory2)dxgiFactoryObject;
+
+            DXGI_SWAP_CHAIN_DESC1 swapChainDesc = new DXGI_SWAP_CHAIN_DESC1();
+            swapChainDesc.Width = 500;
+            swapChainDesc.Height = 500;
+            swapChainDesc.Format = DXGI_FORMAT.DXGI_FORMAT_B8G8R8A8_UNORM;
+            swapChainDesc.Stereo = false;
+            swapChainDesc.SampleDesc.Count = 1;
+            //swapChainDesc.Quality = 0;
+            swapChainDesc.BufferUsage = 0x00000020;
+            swapChainDesc.BufferCount = 2;
+            swapChainDesc.Scaling = DXGI_SCALING.DXGI_SCALING_STRETCH;
+            swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT.DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL;
+            swapChainDesc.Flags = 0;
+
+            IDXGISwapChain1 swapChain;
+            dxgiFactory.CreateSwapChainForComposition(d3dDevice, swapChainDesc, null, out swapChain);
+
+            ISwapChainPanelNative panelNative = swapChainPanel as ISwapChainPanelNative;
+
+            panelNative.SetSwapChain(swapChain);
+
+            D2D1_PIXEL_FORMAT pixelFormat;
+            pixelFormat.format = DXGI_FORMAT.DXGI_FORMAT_B8G8R8A8_UNORM;
+            pixelFormat.alphaMode = D2D1_ALPHA_MODE.D2D1_ALPHA_MODE_PREMULTIPLIED;
+
+            D2D1_BITMAP_PROPERTIES1 bitmapProperties = new D2D1_BITMAP_PROPERTIES1();
+            bitmapProperties.bitmapOptions = D2D1_BITMAP_OPTIONS.D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS.D2D1_BITMAP_OPTIONS_CANNOT_DRAW;
+            bitmapProperties.pixelFormat = pixelFormat;
+            bitmapProperties.dpiX = 96;
+            bitmapProperties.dpiY = 96;
+
+
+            object dxgiBackBufferObject;
+            Guid dxgiSurfaceGuid = typeof(IDXGISurface).GUID;
+            swapChain.GetBuffer(0, dxgiSurfaceGuid, out dxgiBackBufferObject);
+
+            IDXGISurface dxgiBackBuffer = (IDXGISurface) dxgiBackBufferObject;
+
+            ID2D1Bitmap1 targetBitmap;
+            d2dDeviceContext.CreateBitmapFromDxgiSurface(
+                dxgiBackBuffer,
+                bitmapProperties,
+                out targetBitmap);
+
+            d2dDeviceContext.SetTarget(targetBitmap);
+
+            d2dDeviceContext.BeginDraw();
             
         }
     }

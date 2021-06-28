@@ -2,3 +2,4 @@
 IDXGIDevice
 D2D1CreateDevice
 IDXGIFactory2
+ISwapChainPanelNative
